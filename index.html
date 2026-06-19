@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Najd Alwarthan | AI Engineer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #010307;
+            --accent-cyan: #06b6d4;
+            --accent-blue: #0284c7;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #334155;
+            --glass-bg: rgba(2, 11, 20, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.04);
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-hd: 'Space Grotesk', sans-serif;
+            --transition-smooth: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+        }
+
+        body {
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-deep);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .loader-bar {
+            width: 120px;
+            height: 1px;
+            background: var(--text-muted);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            background: var(--accent-cyan);
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+
+        #canvas-ambient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(1, 3, 7, 0.12); 
+            backdrop-filter: blur(16px) saturate(160%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            transition: var(--transition-smooth);
+        }
+
+        .navbar.scrolled {
+            padding: 14px 6%;
+            background: rgba(1, 3, 7, 0.4);
+            border-bottom-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-family: var(--font-hd);
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.1em;
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            position: relative;
+            padding: 4px 0;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-cyan);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+        }
+
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        section {
+            min-height: 100vh;
+            padding: 140px 8% 80px 8%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(25px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-header {
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .section-num {
+            font-family: var(--font-hd);
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 0.1em;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-hd);
+            font-size: 2.8rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(24px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.2);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 20px rgba(6, 182, 212, 0.05);
+        }
+
+        #hero {
+            align-items: flex-start;
+        }
+
+        .hero-title {
+            font-family: var(--font-hd);
+            font-size: 5.5rem;
+            font-weight: 400;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+            background: linear-gradient(to right, #ffffff, #64748b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            max-width: 750px;
+            font-weight: 300;
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+
+        .edu-split {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .edu-main-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            font-weight: 300;
+            color: var(--text-primary);
+        }
+
+        .edu-main-text span {
+            color: var(--accent-blue);
+        }
+
+        .tools-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .tool-category h3 {
+            font-family: var(--font-hd);
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 8px;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            transition: var(--transition-smooth);
+            cursor: default;
+        }
+
+        .tag:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+            background: rgba(6, 182, 212, 0.05);
+            transform: scale(1.04);
+        }
+
+        .timeline-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--glass-border) 15%, var(--glass-border) 85%, transparent);
+            transform: translateX(-50%);
+        }
+
+        .exp-row {
+            display: grid;
+            grid-template-columns: 1fr 120px 1fr;
+            margin-bottom: 48px;
+            align-items: center;
+            position: relative;
+        }
+
+        .exp-left { text-align: right; }
+        .exp-right { text-align: left; }
+        
+        .exp-center-line {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .exp-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+            transition: transform 0.3s ease;
+        }
+
+        .exp-row:hover .exp-dot {
+            transform: scale(1.4);
+        }
+
+        .exp-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            border-radius: 16px;
+            width: 100%;
+            backdrop-filter: blur(24px);
+        }
+
+        .exp-date {
+            font-family: var(--font-hd);
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .bento-card h3 {
+            font-family: var(--font-hd);
+            font-size: 1.6rem;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+        .bento-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .cred-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        .meta-label {
+            font-size: 0.72rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .footer-wrap {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 64px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+        }
+
+        .footer-big-text {
+            font-family: var(--font-hd);
+            font-size: 3.5rem;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+        }
+
+        .contact-links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .con-link {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition-smooth);
+        }
+
+        .con-link:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            padding-left: 8px;
+        }
+
+        @media (max-width: 1200px) {
+            .hero-title { font-size: 4.5rem; }
+        }
+
+        @media (max-width: 900px) {
+            .edu-split, .cred-grid, .footer-wrap, .bento-grid { grid-template-columns: 1fr; }
+            .timeline-container::before { left: 16px; transform: none; }
+            .exp-row { grid-template-columns: 1fr; gap: 16px; margin-bottom: 32px;}
+            .exp-left, .exp-right { text-align: left; padding-left: 40px; }
+            .exp-center-line { position: absolute; left: 12px; top: 2px; }
+            .hero-title { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="loader-bar"></div>
+    </div>
+
+    <canvas id="canvas-ambient"></canvas>
+
+    <div class="app-container">
+        
+        <nav class="navbar">
+            <div class="logo">N.ALWARTHAN</div>
+            <ul class="nav-links">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#tools">Tools</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#certificates">Certificates</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+
+        <section id="hero">
+            <div class="reveal">
+                <h1 class="hero-title">Najd Alwarthan</h1>
+                <p class="hero-subtitle">Artificial Intelligence Engineer building advanced deep learning pipelines, neural structures, and autonomous machine intelligence systems.</p>
+            </div>
+        </section>
+
+        <section id="education">
+            <div class="section-header reveal">
+                <span class="section-num">// 01</span>
+                <h2>Academic Foundation</h2>
+            </div>
+            <div class="edu-split reveal">
+                <div class="edu-main-text">
+                    Driven by a passion for discovery, my academic path in <span style="color:var(--accent-blue);">Artificial Intelligence</span> centers on exploring advanced deep learning architectures and developing innovative, data-driven systems that bridge complex computational theory with real-world impact.
+                </div>
+                <div class="glass-card">
+                    <h3 style="font-family: var(--font-hd); font-weight:400; font-size:1.6rem; margin-top:8px; margin-bottom:8px;">B.Sc. Artificial Intelligence</h3>
+                    <p style="color: var(--accent-blue); font-size:0.95rem; margin-bottom:12px; font-weight:500;">Princess Nourah bint Abdulrahman University (PNU)</p>
+                    <p style="color: var(--text-secondary); font-size:0.9rem; line-height:1.6;">Curriculum focuses on building core competencies in deep learning, predictive data systems, and advanced neural modeling to engineering end-to-end intelligent pipelines.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tools">
+            <div class="section-header reveal">
+                <span class="section-num">// 02</span>
+                <h2>Technical Infrastructure</h2>
+            </div>
+            <div class="tools-grid reveal" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                
+                <div class="glass-card tool-category">
+                    <h3>Data Analysis</h3>
+                    <div class="tag-cloud">
+                        <span class="tag">Feature Engineering</span>
+                        <span class="tag">EDA (Exploratory Data Analysis)</span>
+                        <span class="tag">SQL</span>
+                        <span class="tag">Python</span>
+                    </div>
+                </div>
+
+                <div class="glass-card tool-category">
+                    <h3>Computer Vision</h3>
+                    <div class="tag-cloud">
+                        <span class="tag">OpenCV</span>
+                        <span class="tag">Image Processing</span>
+                        <span class="tag">Object Detection</span>
+                    </div>
+                </div>
+
+                <div class="glass-card tool-category">
+                    <h3>NLP</h3>
+                    <div class="tag-cloud">
+                        <span class="tag">Tokenization</span>
+                        <span class="tag">Lemmatization</span>
+                        <span class="tag">POS Tagging</span>
+                        <span class="tag">Dependency Parsing</span>
+                        <span class="tag">NER</span>
+                        <span class="tag">Sequence Models</span>
+                    </div>
+                </div>
+
+                <div class="glass-card tool-category">
+                    <h3>Deep Learning</h3>
+                    <div class="tag-cloud">
+                        <span class="tag">PyTorch</span>
+                        <span class="tag">TensorFlow</span>
+                        <span class="tag">Machine Learning</span>
+                        <span class="tag">Neural Networks</span>
+                    </div>
+                </div>
+
+                <div class="glass-card tool-category">
+                    <h3>Web Building</h3>
+                    <div class="tag-cloud">
+                        <span class="tag">Flask</span>
+                        <span class="tag">Django</span>
+                        <span class="tag">Java</span>
+                        <span class="tag">Backend APIs</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="experience">
+            <div class="section-header reveal">
+                <span class="section-num">// 03</span>
+                <h2>Professional Experience</h2>
+            </div>
+            
+            <div class="timeline-container reveal">
+                <div class="exp-row">
+                    <div class="exp-left">
+                        <span class="exp-date">01/2026 — 05/2026</span>
+                        <h4 style="color: var(--text-secondary); margin-top: 4px; font-weight:400; font-size:0.9rem;">Riyadh, KSA</h4>
+                    </div>
+                    <div class="exp-center-line"><div class="exp-dot"></div></div>
+                    <div class="exp-right">
+                        <div class="glass-card exp-card">
+                            <h3 style="font-size: 1.3rem; font-family:var(--font-hd); font-weight:400; margin-bottom:4px;">KACST</h3>
+                            <p style="font-size: 0.75rem; text-transform:uppercase; color: var(--accent-blue); letter-spacing:0.05em; margin-bottom:12px; font-weight:600;">COOP Research Trainee</p>
+                            <p style="color: var(--text-secondary); font-size:0.9rem; line-height:1.6;">Engineered a state-of-the-art multimodal AI architecture embedded within IoT smartwatches for cuffless, real-time blood pressure tracking using deep learning processing over synchronized ECG and PPG biosignals.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exp-row">
+                    <div class="exp-left">
+                        <div class="glass-card exp-card">
+                            <h3 style="font-size: 1.3rem; font-family:var(--font-hd); font-weight:400; margin-bottom:4px;">SWARM</h3>
+                            <p style="font-size: 0.75rem; text-transform:uppercase; color: var(--accent-blue); letter-spacing:0.05em; margin-bottom:12px; font-weight:600;">Summer Technology Trainee</p>
+                            <p style="color: var(--text-secondary); font-size:0.9rem; line-height:1.6;">Analyzed computational logic frameworks and evaluated path telemetry constraints for advanced autonomous drone arrays within a real-world enterprise infrastructure.</p>
+                        </div>
+                    </div>
+                    <div class="exp-center-line"><div class="exp-dot"></div></div>
+                    <div class="exp-right">
+                        <span class="exp-date">07/2025 — 08/2025</span>
+                        <h4 style="color: var(--text-secondary); margin-top: 4px; font-weight:400; font-size:0.9rem;">Riyadh, KSA</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects">
+            <div class="section-header reveal">
+                <span class="section-num">// 04</span>
+                <h2>Projects</h2>
+            </div>
+
+            <div class="bento-grid reveal">
+                <div class="glass-card bento-card">
+                    <div>
+                        <span class="meta-label">Project Focus System</span>
+                        <h3>Qirnas Swarm System</h3>
+                        <p style="margin-bottom:16px;">An autonomous swarm drone ecosystem tailored to coordinate and deliver critical medical payloads seamlessly across complex topography during the Hajj season. Implements dynamic mathematical path planning, adaptive vector fields, and onboard real-time obstacle evasion logic tested comprehensively inside strict environmental simulators.</p>
+                    </div>
+                    <div class="tag-cloud">
+                        <span class="tag">Swarm Intelligence</span>
+                        <span class="tag">Path Planning</span>
+                        <span class="tag">Computer Vision</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div>
+                        <span class="meta-label">Recommendation Architecture</span>
+                        <h3>Smart Course Ranking</h3>
+                        <p style="margin-bottom:16px;">A sophisticated recommendation software stack configured to evaluate and selectively rank pedagogical modules. Employs comprehensive data-driven methodologies and contextual modeling algorithms to accurately score components based on user engagement metrics, course material quality, and real-time learner profiles.</p>
+                    </div>
+                    <div class="tag-cloud">
+                        <span class="tag">Python</span>
+                        <span class="tag">Flask</span>
+                        <span class="tag">Django</span>
+                        <span class="tag">Java</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="certificates">
+            <div class="section-header reveal">
+                <span class="section-num">// 05</span>
+                <h2>Verified Credentials</h2>
+            </div>
+            <div class="cred-grid reveal">
+                <div class="glass-card cred-card">
+                    <span class="meta-label">Operational Authority</span>
+                    <h3 style="font-family: var(--font-hd); font-weight:400; font-size:1.6rem; margin-top:8px; margin-bottom:8px;">CAPM® Project Management</h3>
+                    <p style="color: var(--accent-cyan); font-size:0.9rem; margin-bottom:12px; font-weight:500;">Project Management Institute (PMI)</p>
+                    <p style="color: var(--text-secondary); font-size:0.9rem; line-height:1.6;">Certified Associate in Project Management. Evaluated at a verified score scaling metric of Above Target across core methodology domains.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="footer-wrap reveal">
+                <div>
+                    <h2 class="footer-big-text">Let's build<br>something<br><span style="color:var(--accent-cyan);">deep.</span></h2>
+                </div>
+                <div>
+                    <div class="contact-links-list">
+                        <a href="https://www.linkedin.com/in/najd-alwarthan" target="_blank" class="con-link">
+                            <span>LinkedIn</span>
+                            <span>→</span>
+                        </a>
+                        <a href="https://github.com/NajdAlwarthan" target="_blank" class="con-link">
+                            <span>GitHub</span>
+                            <span>→</span>
+                        </a>
+                        <div class="con-link" style="border:none; color: var(--text-muted)">
+                            <span>Location Constraint</span>
+                            <span>Riyadh, KSA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas-ambient');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        let interaction = { x: width / 2, y: height * 0.8, targetX: width / 2, targetY: height * 0.8 };
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        function handlePointer(clientX, clientY) {
+            interaction.targetX = clientX;
+            interaction.targetY = clientY;
+        }
+        window.addEventListener('mousemove', (e) => handlePointer(e.clientX, e.clientY));
+        window.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        class WaveSpark {
+            constructor(x, y, vx, vy, lifespan) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.initialLife = lifespan;
+                this.life = lifespan;
+                this.radius = Math.random() * 1.1 + 0.3;
+                this.hue = Math.random() < 0.2 ? 184 : 196;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.life--;
+            }
+            draw() {
+                let alpha = Math.pow(this.life / this.initialLife, 1.6);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 65%, ${alpha * 0.85})`;
+                ctx.fill();
+            }
+        }
+
+        let sparkles = [];
+        let tick = 0;
+        const MAX_SPARKS = window.innerWidth < 768 ? 250 : 600;
+
+        function renderEngine() {
+            tick += 0.5;
+
+            interaction.x += (interaction.targetX - interaction.x) * 0.05;
+            interaction.y += (interaction.targetY - interaction.y) * 0.05;
+
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#010307';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.globalCompositeOperation = 'screen';
+
+            ctx.filter = 'blur(28px)';
+            let waveBaseline = height * 0.85;
+            
+            ctx.beginPath();
+            ctx.moveTo(-10, height + 50);
+            
+            for (let x = -10; x <= width + 10; x += 20) {
+                let primaryWave = Math.sin(x * 0.003 + tick * 0.012) * 20;
+                let microChop = Math.cos(x * 0.012 - tick * 0.025) * 8;
+                
+                let distToCursor = Math.abs(x - interaction.x);
+                let cursorPull = 0;
+                if (distToCursor < 250) {
+                    cursorPull = (250 - distToCursor) / 250 * 12 * Math.sin(tick * 0.06);
+                }
+
+                let y = waveBaseline + primaryWave + microChop - cursorPull;
+                ctx.lineTo(x, y);
+
+                if (sparkles.length < MAX_SPARKS && Math.random() < 0.15) {
+                    sparkles.push(new WaveSpark(
+                        x + (Math.random() * 8 - 4),
+                        y + (Math.random() * 6),
+                        (Math.random() - 0.5) * 0.6,
+                        (Math.random() * 0.3),
+                        Math.random() * 50 + 30
+                    ));
+                }
+            }
+            ctx.lineTo(width + 10, height + 50);
+            ctx.closePath();
+
+            let oceanGlow = ctx.createLinearGradient(0, waveBaseline - 120, 0, height);
+            oceanGlow.addColorStop(0, 'transparent');
+            oceanGlow.addColorStop(0.5, 'rgba(2, 44, 114, 0.15)');
+            oceanGlow.addColorStop(0.8, 'rgba(6, 182, 212, 0.35)');
+            oceanGlow.addColorStop(1, 'rgba(1, 15, 30, 0.7)');
+            ctx.fillStyle = oceanGlow;
+            ctx.fill();
+
+            ctx.filter = 'none';
+
+            ctx.globalCompositeOperation = 'source-over';
+            for (let i = sparkles.length - 1; i >= 0; i--) {
+                sparkles[i].update();
+                sparkles[i].draw();
+                if (sparkles[i].life <= 0) sparkles.splice(i, 1);
+            }
+
+            ctx.globalCompositeOperation = 'screen';
+            let cursorAura = ctx.createRadialGradient(interaction.x, interaction.y, 0, interaction.x, interaction.y, 160);
+            cursorAura.addColorStop(0, 'rgba(6, 182, 212, 0.05)');
+            cursorAura.addColorStop(1, 'transparent');
+            ctx.fillStyle = cursorAura;
+            ctx.fillRect(0, 0, width, height);
+
+            requestAnimationFrame(renderEngine);
+        }
+
+        renderEngine();
+
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 800);
+        });
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const box = card.getBoundingClientRect();
+                const xAngle = -(box.height / 2 - (e.clientY - box.top)) / 30;
+                const yAngle = (box.width / 2 - (e.clientX - box.left)) / 30;
+                card.style.transform = `perspective(1000px) rotateX(${xAngle}deg) rotateY(${yAngle}deg) translateY(-4px)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'none';
+            });
+        });
+
+        const navbar = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-links a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.12 });
+
+        revealElements.forEach(el => observer.observe(el));
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(sec => {
+                if (window.pageYOffset >= sec.offsetTop - 280) {
+                    current = sec.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
